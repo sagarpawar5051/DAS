@@ -17,7 +17,9 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,11 +30,14 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.InputStreamSource;
+import org.springframework.core.io.Resource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -653,219 +658,219 @@ public SaiResponse getDeptUser(@RequestParam String createdBy, @RequestParam(req
         javaMailSender.send(message);
     }
 
-//    @PutMapping(value = "/updateDocument", consumes = "multipart/form-data")
-//    public ResponseEntity<SaiResponse> updateIssue(
-//            @RequestParam("objhdMst") String st,
-//            @RequestParam(value = "file", required = false) MultipartFile file,
-//            @RequestParam("docId") Integer docId) {
-//
-//        try {
-//            // ObjectMapper to map JSON to DTO
-//            ObjectMapper objectMapper = new ObjectMapper();
-//            DocUploadDto objhdMst = objectMapper.readValue(st, DocUploadDto.class);
-//
-//            // If file is missing or empty, return error
-////            if (file == null || file.isEmpty()) {
-////                SaiResponse errorResponse = new SaiResponse(400, "Please Select the File", null);
-////                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-////            }
-//
-//            String contentType = null;
-//        String originalFilename = null;
-//        
-// 
-//            contentType = file.getContentType().toLowerCase();
-//            originalFilename = file.getOriginalFilename().toLowerCase();
-//
-//            if (!(contentType.equals("application/pdf") || contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
-//                    && !(originalFilename.endsWith(".pdf") || originalFilename.endsWith(".docx"))) {
-//                SaiResponse errorResponse = new SaiResponse(400, "Only PDF and DOCX files are allowed", null);
+    @PutMapping(value = "/updateDocument", consumes = "multipart/form-data")
+    public ResponseEntity<SaiResponse> updateIssue(
+            @RequestParam("objhdMst") String st,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam("docId") Integer docId) {
+
+        try {
+            // ObjectMapper to map JSON to DTO
+            ObjectMapper objectMapper = new ObjectMapper();
+            DocUploadDto objhdMst = objectMapper.readValue(st, DocUploadDto.class);
+
+            // If file is missing or empty, return error
+//            if (file == null || file.isEmpty()) {
+//                SaiResponse errorResponse = new SaiResponse(400, "Please Select the File", null);
 //                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
 //            }
-//        
-//            Optional<DocumentUpload> cdmMst = documentDao.findById(docId);
-//            DocumentUpload docMst = cdmMst.isPresent() ? cdmMst.get() : null;
-//            
-//             // Get the current version and increment it
-//        String currentVersion = docMst.getVersion();
-//        double versionNumber = currentVersion != null ? Double.parseDouble(currentVersion) : 1.0;
-//        versionNumber += 1.0; // Increment version by 0.1
-//        String newVersion = String.format("%.1f", versionNumber);
-//
-//            // Convert DTO to Entity
-//            DocumentUpload billHdr = new DocumentUpload();
-//            BeanUtils.copyProperties(objhdMst, billHdr);
-//
-//            // Set other fields
-//            billHdr.setCreatedBy(docMst.getCreatedBy());
-//            billHdr.setCreationDate(docMst.getCreationDate());
-//            billHdr.setFilestatus(objhdMst.getFilestatus());
-//            if(objhdMst.getFilestatus().equals("WIP") ){
-//            billHdr.setUseremail(objhdMst.getUseremail());
-//            billHdr.setHodemail(objhdMst.getHodemail());
-//            billHdr.setHodtktNo(objhdMst.getHodtktNo());
-//            billHdr.setHodName(objhdMst.getHodName());
-//            billHdr.setUserName(objhdMst.getUserName());
-//            }
-//            if(objhdMst.getFilestatus().equals("REVIEW")){
-//            billHdr.setUseremail(objhdMst.getUseremail());
-//            billHdr.setHodemail(objhdMst.getRevieweremail());
-//            billHdr.setHodtktNo(objhdMst.getReviewertktNo());
-//            billHdr.setHodName(objhdMst.getReviewerName());
-//            billHdr.setUserName(objhdMst.getUserName());
-//            }
-//             if(objhdMst.getFilestatus().equals("SEND FOR APPROVAL")){
-//            billHdr.setUseremail(objhdMst.getUseremail());
-//            billHdr.setHodemail(objhdMst.getAuthorityemail());
-//            billHdr.setHodtktNo(objhdMst.getAuthoritytktNo());
-//            billHdr.setHodName(objhdMst.getAuthoritytktNo());
-//            billHdr.setUserName(objhdMst.getUserName());
-//            }
-//            
-//            billHdr.setVersion(newVersion);
-//            billHdr.setUpdationDate(new Date());
-//            billHdr.setUpdatedBy(objhdMst.getHodtktNo());
-//            billHdr.setRemark(objhdMst.getRemark());
-//            billHdr.setAuthorityName(objhdMst.getAuthorityName());
-//            billHdr.setAuthorityemail(objhdMst.getAuthorityemail());
-//            billHdr.setAuthoritytktNo(objhdMst.getAuthoritytktNo());
-//            billHdr.setReviewerName(objhdMst.getReviewerName());
-//            billHdr.setRevieweremail(objhdMst.getRevieweremail());
-//            billHdr.setReviewertktNo(objhdMst.getReviewertktNo());
-//
-//            // Save document details to database
-//            documentDao.save(billHdr);
-//
-//            // Construct file name and save path
-////            String fileName = file.getOriginalFilename();
-//            String fileName = file.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_" + billHdr.getDocId() + file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
-//            File directory = new File(filesPath);
-//
-//            // Set file path
-//            File destinationFile = new File(filesPath + fileName);
-//            billHdr.setFileName(fileName);
-//            billHdr.setFilePath(destinationFile.getAbsolutePath());
-//
-//            // Save document with file details
-//            documentDao.save(billHdr); // Optional: Save only once if redundant
-//
-//            if(billHdr.getFilestatus().equals("SEND FOR APPROVAL") && objhdMst.getReviewerName()!=null)
-//            {
-//                 sendEmailNotification2(
-//                    objhdMst.getCreatedBy(),
-//                    objhdMst.getRemark() + "-" + billHdr.getVersion(),
-//                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getReviewerName(),
-//                    file, objhdMst.getAuthorityemail(),
-//                    objhdMst.getRevieweremail()
-//            );        
-//            }
-//             else if(billHdr.getFilestatus().equals("SEND FOR APPROVAL") && objhdMst.getReviewerName()==null){
-//                sendEmailNotification3(
-//                    objhdMst.getCreatedBy(),
-//                    objhdMst.getRemark() + "-" + billHdr.getVersion(),
-//                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getHodName(),
-//                    file, objhdMst.getAuthorityemail(),
-//                    objhdMst.getHodemail());
-//            }
-//            else if(billHdr.getFilestatus().equals("REVIEW")){
-//                sendEmailNotification3(
-//                    objhdMst.getCreatedBy(),
-//                    objhdMst.getRemark() + "-" + billHdr.getVersion(),
-//                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getUpdatedBy(),
-//                    file, objhdMst.getRevieweremail(),
-//                    billHdr.getHodemail());
-//            }
-//            else{
-//            
-//            // Send email notification
-//            sendEmailNotification1(
-//                    objhdMst.getCreatedBy(),
-//                    objhdMst.getComment() + "-" + billHdr.getVersion(),
-//                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getHodName(),
-//                    file, objhdMst.getUseremail(),
-//                    objhdMst.getHodemail()
-//            );
-//            }
-//            // Save the file to the destination
-////            file.transferTo(destinationFile);
-//                      
-//            DocumentHistory docHistory = new DocumentHistory();
-//
-//            docHistory.setCreationDate(new Date());
-//            docHistory.setCreatedBy(objhdMst.getCreatedBy());
-//            docHistory.setFilestatus(objhdMst.getFilestatus());
-//            if(objhdMst.getFilestatus().equals("WIP")){
-//            docHistory.setUseremail(objhdMst.getUseremail());
-//            docHistory.setHodemail(objhdMst.getHodemail());
-//            docHistory.setHodtktNo(objhdMst.getHodtktNo());
-//            docHistory.setHodName(objhdMst.getHodName());
-//            docHistory.setUserName(objhdMst.getUserName());
-//            }
-//            if(objhdMst.getFilestatus().equals("REVIEW")){
-//            docHistory.setUseremail(objhdMst.getUseremail());
-//            docHistory.setHodemail(objhdMst.getRevieweremail());
-//            docHistory.setHodtktNo(objhdMst.getReviewertktNo());
-//            docHistory.setHodName(objhdMst.getReviewerName());
-//            docHistory.setUserName(objhdMst.getUserName());
-//            }
-//             if(objhdMst.getFilestatus().equals("SEND FOR APPROVAL")){
-//            docHistory.setUseremail(objhdMst.getUseremail());
-//            docHistory.setHodemail(objhdMst.getAuthorityemail());
-//            docHistory.setHodtktNo(objhdMst.getAuthoritytktNo());
-//            docHistory.setHodName(objhdMst.getAuthorityName());
-//            docHistory.setUserName(objhdMst.getUserName());
-//            }
-////            docHistory.setFileName(fileName);
-////            docHistory.setFilePath(destinationFile.getAbsolutePath());
-//            docHistory.setDocId(billHdr.getDocId()); // Assuming DocumentUpload entity has an ID
-//            docHistory.setVersion(billHdr.getVersion());
-//            docHistory.setComment(billHdr.getComment());
-//            docHistory.setDept(billHdr.getDept());
-//            docHistory.setLocation(billHdr.getLocation());
-//            docHistory.setOuId(billHdr.getOuId());
-//            docHistory.setRemark(billHdr.getRemark());
-//            docHistory.setFilestatus(billHdr.getFilestatus());
-//             docHistory.setUpdatedBy(objhdMst.getHodtktNo());
-//            docHistory.setUpdationDate(new Date());
-//            docHistory.setAuthorityName(billHdr.getAuthorityName());
-//            docHistory.setAuthorityemail(billHdr.getAuthorityemail());
-//            docHistory.setAuthoritytktNo(billHdr.getAuthoritytktNo());
-//            docHistory.setReviewerName(billHdr.getReviewerName());
-//            docHistory.setRevieweremail(billHdr.getRevieweremail());
-//            docHistory.setReviewertktNo(billHdr.getReviewertktNo());
-//
-//            docHistoryDao.save(docHistory);
-//            
-//             String fileName1 = file.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_" + docHistory.getHistoryId() + file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
-//            File directory1 = new File(filesPath);
-//
-//            // Set file path
-//            File destinationFile1 = new File(filesPath + fileName1);
-//            docHistory.setFileName(fileName1);
-//            docHistory.setFilePath(destinationFile1.getAbsolutePath());
-//
-//            // Save document with file details
-//            docHistoryDao.save(docHistory); 
-//            
-//            billHdr.setFileName(fileName1);
-//            billHdr.setFilePath(destinationFile1.getAbsolutePath());
-//
-//            // Save document with file details
-//            documentDao.save(billHdr); // Optional: Save only once if redundant
-//            
-//             file.transferTo(destinationFile1);
-//
-//            // Return success response
-//            SaiResponse response = new SaiResponse(200, "Document Submitted successfully", billHdr);
-//            return ResponseEntity.ok(response);
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            SaiResponse errorResponse = new SaiResponse(500, "Error: " + e.getMessage(), null);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//        }
-//
-//    }
+
+            String contentType = null;
+        String originalFilename = null;
+        
+ 
+            contentType = file.getContentType().toLowerCase();
+            originalFilename = file.getOriginalFilename().toLowerCase();
+
+            if (!(contentType.equals("application/pdf") || contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                    && !(originalFilename.endsWith(".pdf") || originalFilename.endsWith(".docx"))) {
+                SaiResponse errorResponse = new SaiResponse(400, "Only PDF and DOCX files are allowed", null);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+        
+            Optional<DocumentUpload> cdmMst = documentDao.findById(docId);
+            DocumentUpload docMst = cdmMst.isPresent() ? cdmMst.get() : null;
+            
+             // Get the current version and increment it
+        String currentVersion = docMst.getVersion();
+        double versionNumber = currentVersion != null ? Double.parseDouble(currentVersion) : 1.0;
+        versionNumber += 1.0; // Increment version by 0.1
+        String newVersion = String.format("%.1f", versionNumber);
+
+            // Convert DTO to Entity
+            DocumentUpload billHdr = new DocumentUpload();
+            BeanUtils.copyProperties(objhdMst, billHdr);
+
+            // Set other fields
+            billHdr.setCreatedBy(docMst.getCreatedBy());
+            billHdr.setCreationDate(docMst.getCreationDate());
+            billHdr.setFilestatus(objhdMst.getFilestatus());
+            if(objhdMst.getFilestatus().equals("WIP") ){
+            billHdr.setUseremail(objhdMst.getUseremail());
+            billHdr.setHodemail(objhdMst.getHodemail());
+            billHdr.setHodtktNo(objhdMst.getHodtktNo());
+            billHdr.setHodName(objhdMst.getHodName());
+            billHdr.setUserName(objhdMst.getUserName());
+            }
+            if(objhdMst.getFilestatus().equals("REVIEW")){
+            billHdr.setUseremail(objhdMst.getUseremail());
+            billHdr.setHodemail(objhdMst.getRevieweremail());
+            billHdr.setHodtktNo(objhdMst.getReviewertktNo());
+            billHdr.setHodName(objhdMst.getReviewerName());
+            billHdr.setUserName(objhdMst.getUserName());
+            }
+             if(objhdMst.getFilestatus().equals("SEND FOR APPROVAL")){
+            billHdr.setUseremail(objhdMst.getUseremail());
+            billHdr.setHodemail(objhdMst.getAuthorityemail());
+            billHdr.setHodtktNo(objhdMst.getAuthoritytktNo());
+            billHdr.setHodName(objhdMst.getAuthoritytktNo());
+            billHdr.setUserName(objhdMst.getUserName());
+            }
+            
+            billHdr.setVersion(newVersion);
+            billHdr.setUpdationDate(new Date());
+            billHdr.setUpdatedBy(objhdMst.getHodtktNo());
+            billHdr.setRemark(objhdMst.getRemark());
+            billHdr.setAuthorityName(objhdMst.getAuthorityName());
+            billHdr.setAuthorityemail(objhdMst.getAuthorityemail());
+            billHdr.setAuthoritytktNo(objhdMst.getAuthoritytktNo());
+            billHdr.setReviewerName(objhdMst.getReviewerName());
+            billHdr.setRevieweremail(objhdMst.getRevieweremail());
+            billHdr.setReviewertktNo(objhdMst.getReviewertktNo());
+
+            // Save document details to database
+            documentDao.save(billHdr);
+
+            // Construct file name and save path
+//            String fileName = file.getOriginalFilename();
+            String fileName = file.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_" + billHdr.getDocId() + file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+            File directory = new File(filesPath);
+
+            // Set file path
+            File destinationFile = new File(filesPath + fileName);
+            billHdr.setFileName(fileName);
+            billHdr.setFilePath(destinationFile.getAbsolutePath());
+
+            // Save document with file details
+            documentDao.save(billHdr); // Optional: Save only once if redundant
+
+            if(billHdr.getFilestatus().equals("SEND FOR APPROVAL") && objhdMst.getReviewerName()!=null)
+            {
+                 sendEmailNotification2(
+                    objhdMst.getCreatedBy(),
+                    objhdMst.getRemark() + "-" + billHdr.getVersion(),
+                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getReviewerName(),
+                    file, objhdMst.getAuthorityemail(),
+                    objhdMst.getRevieweremail()
+            );        
+            }
+             else if(billHdr.getFilestatus().equals("SEND FOR APPROVAL") && objhdMst.getReviewerName()==null){
+                sendEmailNotification3(
+                    objhdMst.getCreatedBy(),
+                    objhdMst.getRemark() + "-" + billHdr.getVersion(),
+                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getHodName(),
+                    file, objhdMst.getAuthorityemail(),
+                    objhdMst.getHodemail());
+            }
+            else if(billHdr.getFilestatus().equals("REVIEW")){
+                sendEmailNotification3(
+                    objhdMst.getCreatedBy(),
+                    objhdMst.getRemark() + "-" + billHdr.getVersion(),
+                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getUpdatedBy(),
+                    file, objhdMst.getRevieweremail(),
+                    billHdr.getHodemail());
+            }
+            else{
+            
+            // Send email notification
+            sendEmailNotification1(
+                    objhdMst.getCreatedBy(),
+                    objhdMst.getComment() + "-" + billHdr.getVersion(),
+                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getHodName(),
+                    file, objhdMst.getUseremail(),
+                    objhdMst.getHodemail()
+            );
+            }
+            // Save the file to the destination
+//            file.transferTo(destinationFile);
+                      
+            DocumentHistory docHistory = new DocumentHistory();
+
+            docHistory.setCreationDate(new Date());
+            docHistory.setCreatedBy(objhdMst.getCreatedBy());
+            docHistory.setFilestatus(objhdMst.getFilestatus());
+            if(objhdMst.getFilestatus().equals("WIP")){
+            docHistory.setUseremail(objhdMst.getUseremail());
+            docHistory.setHodemail(objhdMst.getHodemail());
+            docHistory.setHodtktNo(objhdMst.getHodtktNo());
+            docHistory.setHodName(objhdMst.getHodName());
+            docHistory.setUserName(objhdMst.getUserName());
+            }
+            if(objhdMst.getFilestatus().equals("REVIEW")){
+            docHistory.setUseremail(objhdMst.getUseremail());
+            docHistory.setHodemail(objhdMst.getRevieweremail());
+            docHistory.setHodtktNo(objhdMst.getReviewertktNo());
+            docHistory.setHodName(objhdMst.getReviewerName());
+            docHistory.setUserName(objhdMst.getUserName());
+            }
+             if(objhdMst.getFilestatus().equals("SEND FOR APPROVAL")){
+            docHistory.setUseremail(objhdMst.getUseremail());
+            docHistory.setHodemail(objhdMst.getAuthorityemail());
+            docHistory.setHodtktNo(objhdMst.getAuthoritytktNo());
+            docHistory.setHodName(objhdMst.getAuthorityName());
+            docHistory.setUserName(objhdMst.getUserName());
+            }
+//            docHistory.setFileName(fileName);
+//            docHistory.setFilePath(destinationFile.getAbsolutePath());
+            docHistory.setDocId(billHdr.getDocId()); // Assuming DocumentUpload entity has an ID
+            docHistory.setVersion(billHdr.getVersion());
+            docHistory.setComment(billHdr.getComment());
+            docHistory.setDept(billHdr.getDept());
+            docHistory.setLocation(billHdr.getLocation());
+            docHistory.setOuId(billHdr.getOuId());
+            docHistory.setRemark(billHdr.getRemark());
+            docHistory.setFilestatus(billHdr.getFilestatus());
+             docHistory.setUpdatedBy(objhdMst.getHodtktNo());
+            docHistory.setUpdationDate(new Date());
+            docHistory.setAuthorityName(billHdr.getAuthorityName());
+            docHistory.setAuthorityemail(billHdr.getAuthorityemail());
+            docHistory.setAuthoritytktNo(billHdr.getAuthoritytktNo());
+            docHistory.setReviewerName(billHdr.getReviewerName());
+            docHistory.setRevieweremail(billHdr.getRevieweremail());
+            docHistory.setReviewertktNo(billHdr.getReviewertktNo());
+
+            docHistoryDao.save(docHistory);
+            
+             String fileName1 = file.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_" + docHistory.getHistoryId() + file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+            File directory1 = new File(filesPath);
+
+            // Set file path
+            File destinationFile1 = new File(filesPath + fileName1);
+            docHistory.setFileName(fileName1);
+            docHistory.setFilePath(destinationFile1.getAbsolutePath());
+
+            // Save document with file details
+            docHistoryDao.save(docHistory); 
+            
+            billHdr.setFileName(fileName1);
+            billHdr.setFilePath(destinationFile1.getAbsolutePath());
+
+            // Save document with file details
+            documentDao.save(billHdr); // Optional: Save only once if redundant
+            
+             file.transferTo(destinationFile1);
+
+            // Return success response
+            SaiResponse response = new SaiResponse(200, "Document Submitted successfully", billHdr);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            SaiResponse errorResponse = new SaiResponse(500, "Error: " + e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+
+    }
     
     
      @PutMapping(value = "/updateUser", consumes = "multipart/form-data")
@@ -1008,210 +1013,251 @@ public SaiResponse getDeptUser(@RequestParam String createdBy, @RequestParam(req
     
    // ---   newcode if file is null also update code--
     
-    @PutMapping(value = "/updateDocument", consumes = "multipart/form-data")
-public ResponseEntity<SaiResponse> updateIssue(
-        @RequestParam("objhdMst") String st,
-        @RequestParam(value = "file", required = false) MultipartFile file,
-        @RequestParam("docId") Integer docId) {
+//    @PutMapping(value = "/updateDocument", consumes = "multipart/form-data")
+//public ResponseEntity<SaiResponse> updateIssue(
+//        @RequestParam("objhdMst") String st,
+//        @RequestParam(value = "file", required = false) MultipartFile file,
+//        @RequestParam("docId") Integer docId) {
+//
+//    try {
+//        // ObjectMapper to map JSON to DTO
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        DocUploadDto objhdMst = objectMapper.readValue(st, DocUploadDto.class);
+//
+//        // Initialize file variables
+//        String fileName = null;
+//        String filePath = null;
+//        File destinationFile = null;
+//
+//        // Handle file upload if the file is provided
+//        if (file != null && !file.isEmpty()) {
+//            String contentType = file.getContentType().toLowerCase();
+//            String originalFilename = file.getOriginalFilename().toLowerCase();
+//
+//            // Validate file type
+//            if (!(contentType.equals("application/pdf") || contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+//                    && !(originalFilename.endsWith(".pdf") || originalFilename.endsWith(".docx"))) {
+//                SaiResponse errorResponse = new SaiResponse(400, "Only PDF and DOCX files are allowed", null);
+//                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+//            }
+//
+//            // Construct file name
+//            fileName = file.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_" + docId + file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+//            destinationFile = new File(filesPath + fileName);
+//            filePath = destinationFile.getAbsolutePath();
+//        }
+//
+//        // Fetch existing document details
+//        Optional<DocumentUpload> cdmMst = documentDao.findById(docId);
+//        if (!cdmMst.isPresent()) {
+//            SaiResponse errorResponse = new SaiResponse(404, "Document not found", null);
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+//        }
+//
+//        DocumentUpload docMst = cdmMst.get();
+//        String currentVersion = docMst.getVersion();
+//        double versionNumber = currentVersion != null ? Double.parseDouble(currentVersion) : 1.0;
+//        versionNumber += 1.0; // Increment version by 0.1
+//        String newVersion = String.format("%.1f", versionNumber);
+//
+//        // Convert DTO to Entity and set other fields
+//        DocumentUpload billHdr = new DocumentUpload();
+//        BeanUtils.copyProperties(objhdMst, billHdr);
+//        billHdr.setVersion(newVersion);
+//        billHdr.setUpdationDate(new Date());
+//        billHdr.setUpdatedBy(objhdMst.getHodtktNo());
+//        billHdr.setRemark(objhdMst.getRemark());      
+//
+//        // Copy metadata fields (filestatus, user details, etc.)
+//        copyMetadataFields(billHdr, objhdMst);
+//
+//        // Save document metadata to database (even without file)
+//        documentDao.save(billHdr);
+//
+//        // If the file is provided, save it
+//        if (file != null && !file.isEmpty()) {
+//            billHdr.setFileName(fileName);
+//            billHdr.setFilePath(filePath);
+//            documentDao.save(billHdr); // Update document with file details
+//            file.transferTo(destinationFile); // Save file to the file system
+//        }
+//
+//        // Send appropriate email notifications based on status
+//        sendEmailNotifications(objhdMst, billHdr, file);
+//
+//        // Save document history
+//        saveDocumentHistory(objhdMst, billHdr, file);
+//
+//        // Return success response
+//        SaiResponse response = new SaiResponse(200, "Document Updated successfully", billHdr);
+//        return ResponseEntity.ok(response);
+//
+//    } catch (Exception e) {
+////         SaiResponse response = new SaiResponse(200, "Document Updated successfully", null);
+//        SaiResponse errorResponse = new SaiResponse(500, "Error: " + e.getMessage(), null);
+//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+//    }
+//}
+//
+//private void copyMetadataFields(DocumentUpload billHdr, DocUploadDto objhdMst) {
+//    billHdr.setCreatedBy(objhdMst.getCreatedBy());
+//    billHdr.setCreationDate(new Date()); // or use the original creation date if needed
+//    billHdr.setFilestatus(objhdMst.getFilestatus());
+//
+//    // Handle different statuses with specific email assignments
+//    if (objhdMst.getFilestatus().equals("WIP")) {
+//        billHdr.setUseremail(objhdMst.getUseremail());
+//        billHdr.setHodemail(objhdMst.getHodemail());
+//        billHdr.setHodtktNo(objhdMst.getHodtktNo());
+//        billHdr.setHodName(objhdMst.getHodName());
+//        billHdr.setUserName(objhdMst.getUserName());
+//    } else if (objhdMst.getFilestatus().equals("REVIEW")) {
+//        billHdr.setUseremail(objhdMst.getUseremail());
+//        billHdr.setHodemail(objhdMst.getRevieweremail());
+//        billHdr.setHodtktNo(objhdMst.getReviewertktNo());
+//        billHdr.setHodName(objhdMst.getReviewerName());
+//        billHdr.setUserName(objhdMst.getUserName());
+//    } else if (objhdMst.getFilestatus().equals("SEND FOR APPROVAL")) {
+//        billHdr.setUseremail(objhdMst.getUseremail());
+//        billHdr.setHodemail(objhdMst.getAuthorityemail());
+//        billHdr.setHodtktNo(objhdMst.getAuthoritytktNo());
+//        billHdr.setHodName(objhdMst.getAuthoritytktNo()); // Possible typo, check if it's correct
+//        billHdr.setUserName(objhdMst.getUserName());
+//    }
+//}
+//
+//private void sendEmailNotifications(DocUploadDto objhdMst, DocumentUpload billHdr, MultipartFile file) throws MessagingException, IOException {
+//                if(billHdr.getFilestatus().equals("SEND FOR APPROVAL") && objhdMst.getReviewerName()!=null)
+//            {
+//                 sendEmailNotification2(
+//                    objhdMst.getCreatedBy(),
+//                    objhdMst.getRemark() + "-" + billHdr.getVersion(),
+//                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getReviewerName(),
+//                    file, objhdMst.getAuthorityemail(),
+//                    objhdMst.getRevieweremail()
+//            );        
+//            }
+//             else if(billHdr.getFilestatus().equals("SEND FOR APPROVAL") && objhdMst.getReviewerName()==null){
+//                sendEmailNotification3(
+//                    objhdMst.getCreatedBy(),
+//                    objhdMst.getRemark() + "-" + billHdr.getVersion(),
+//                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getHodName(),
+//                    file, objhdMst.getAuthorityemail(),
+//                    objhdMst.getHodemail());
+//            }
+//            else if(billHdr.getFilestatus().equals("REVIEW")){
+//                sendEmailNotification3(
+//                    objhdMst.getCreatedBy(),
+//                    objhdMst.getRemark() + "-" + billHdr.getVersion(),
+//                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getUpdatedBy(),
+//                    file, objhdMst.getRevieweremail(),
+//                    objhdMst.getHodemail());
+//            }
+//            else{
+//            
+//            // Send email notification
+//            sendEmailNotification1(
+//                    objhdMst.getCreatedBy(),
+//                    objhdMst.getComment() + "-" + billHdr.getVersion(),
+//                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getHodName(),
+//                    file, objhdMst.getUseremail(),
+//                    objhdMst.getHodemail()
+//            );
+//            }
+//}
+//
+//private void saveDocumentHistory(DocUploadDto objhdMst, DocumentUpload billHdr, MultipartFile file) throws IOException {
+//    DocumentHistory docHistory = new DocumentHistory();
+//    docHistory.setCreationDate(new Date());
+//    docHistory.setCreatedBy(objhdMst.getCreatedBy());
+//    docHistory.setFilestatus(objhdMst.getFilestatus());
+//                if(objhdMst.getFilestatus().equals("WIP")){
+//            docHistory.setUseremail(objhdMst.getUseremail());
+//            docHistory.setHodemail(objhdMst.getHodemail());
+//            docHistory.setHodtktNo(objhdMst.getHodtktNo());
+//            docHistory.setHodName(objhdMst.getHodName());
+//            docHistory.setUserName(objhdMst.getUserName());
+//            }
+//            if(objhdMst.getFilestatus().equals("REVIEW")){
+//            docHistory.setUseremail(objhdMst.getUseremail());
+//            docHistory.setHodemail(objhdMst.getRevieweremail());
+//            docHistory.setHodtktNo(objhdMst.getReviewertktNo());
+//            docHistory.setHodName(objhdMst.getReviewerName());
+//            docHistory.setUserName(objhdMst.getUserName());
+//            }
+//             if(objhdMst.getFilestatus().equals("SEND FOR APPROVAL")){
+//            docHistory.setUseremail(objhdMst.getUseremail());
+//            docHistory.setHodemail(objhdMst.getAuthorityemail());
+//            docHistory.setHodtktNo(objhdMst.getAuthoritytktNo());
+//            docHistory.setHodName(objhdMst.getAuthorityName());
+//            docHistory.setUserName(objhdMst.getUserName());
+//            }
+//
+//    docHistory.setDocId(billHdr.getDocId());
+//    docHistory.setVersion(billHdr.getVersion());
+//    docHistory.setComment(billHdr.getComment());
+//    docHistory.setDept(billHdr.getDept());
+//    docHistory.setLocation(billHdr.getLocation());
+//    docHistory.setOuId(billHdr.getOuId());
+//    docHistory.setRemark(billHdr.getRemark());
+//    docHistory.setFilestatus(billHdr.getFilestatus());
+//    docHistory.setUpdatedBy(objhdMst.getHodtktNo());
+//    docHistory.setFileName(objhdMst.getFileName());
+//    docHistory.setFilePath(objhdMst.getFilePath());
+//    docHistory.setUpdationDate(new Date());
+//
+//    // Save to database
+//    docHistoryDao.save(docHistory);
+//
+//    if (file != null && !file.isEmpty()) {
+//        String historyFileName = file.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_" + docHistory.getHistoryId() + file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+//        File historyFile = new File(filesPath + historyFileName);
+//        docHistory.setFileName(historyFileName);
+//        docHistory.setFilePath(historyFile.getAbsolutePath());
+//
+//        // Save file
+//        file.transferTo(historyFile);
+//    }
+//}
 
+@GetMapping("/downloadFile")
+public ResponseEntity<Resource> downloadFile(@RequestParam Integer docId) {
     try {
-        // ObjectMapper to map JSON to DTO
-        ObjectMapper objectMapper = new ObjectMapper();
-        DocUploadDto objhdMst = objectMapper.readValue(st, DocUploadDto.class);
-
-        // Initialize file variables
-        String fileName = null;
-        String filePath = null;
-        File destinationFile = null;
-
-        // Handle file upload if the file is provided
-        if (file != null && !file.isEmpty()) {
-            String contentType = file.getContentType().toLowerCase();
-            String originalFilename = file.getOriginalFilename().toLowerCase();
-
-            // Validate file type
-            if (!(contentType.equals("application/pdf") || contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
-                    && !(originalFilename.endsWith(".pdf") || originalFilename.endsWith(".docx"))) {
-                SaiResponse errorResponse = new SaiResponse(400, "Only PDF and DOCX files are allowed", null);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-            }
-
-            // Construct file name
-            fileName = file.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_" + docId + file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
-            destinationFile = new File(filesPath + fileName);
-            filePath = destinationFile.getAbsolutePath();
+        Optional<DocumentUpload> document = documentDao.findById(docId);
+        if (!document.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 
-        // Fetch existing document details
-        Optional<DocumentUpload> cdmMst = documentDao.findById(docId);
-        if (!cdmMst.isPresent()) {
-            SaiResponse errorResponse = new SaiResponse(404, "Document not found", null);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        // Get the file path from the document metadata
+        String filePath = document.get().getFilePath();
+        File file = new File(filePath);
+        
+        if (!file.exists()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 
-        DocumentUpload docMst = cdmMst.get();
-        String currentVersion = docMst.getVersion();
-        double versionNumber = currentVersion != null ? Double.parseDouble(currentVersion) : 1.0;
-        versionNumber += 1.0; // Increment version by 0.1
-        String newVersion = String.format("%.1f", versionNumber);
+        // Create a resource from the file
+        Resource resource = new FileSystemResource(file);
 
-        // Convert DTO to Entity and set other fields
-        DocumentUpload billHdr = new DocumentUpload();
-        BeanUtils.copyProperties(objhdMst, billHdr);
-        billHdr.setVersion(newVersion);
-        billHdr.setUpdationDate(new Date());
-        billHdr.setUpdatedBy(objhdMst.getHodtktNo());
-        billHdr.setRemark(objhdMst.getRemark());      
-
-        // Copy metadata fields (filestatus, user details, etc.)
-        copyMetadataFields(billHdr, objhdMst);
-
-        // Save document metadata to database (even without file)
-        documentDao.save(billHdr);
-
-        // If the file is provided, save it
-        if (file != null && !file.isEmpty()) {
-            billHdr.setFileName(fileName);
-            billHdr.setFilePath(filePath);
-            documentDao.save(billHdr); // Update document with file details
-            file.transferTo(destinationFile); // Save file to the file system
+        // Set the correct content type depending on the file type (PDF, DOCX, etc.)
+        String fileExtension = file.getName().substring(file.getName().lastIndexOf(".") + 1).toLowerCase();
+        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM; // Default for binary content
+        if ("pdf".equals(fileExtension)) {
+            mediaType = MediaType.APPLICATION_PDF;
+        } else if ("docx".equals(fileExtension)) {
+            mediaType = MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
         }
 
-        // Send appropriate email notifications based on status
-        sendEmailNotifications(objhdMst, billHdr, file);
-
-        // Save document history
-        saveDocumentHistory(objhdMst, billHdr, file);
-
-        // Return success response
-        SaiResponse response = new SaiResponse(200, "Document Updated successfully", billHdr);
-        return ResponseEntity.ok(response);
-
+        // Return the file as a downloadable attachment
+        return ResponseEntity.ok()
+                .contentType(mediaType)  // Correct content type
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
+                .body(resource);
     } catch (Exception e) {
         e.printStackTrace();
-        SaiResponse errorResponse = new SaiResponse(500, "Error: " + e.getMessage(), null);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
 }
 
-private void copyMetadataFields(DocumentUpload billHdr, DocUploadDto objhdMst) {
-    billHdr.setCreatedBy(objhdMst.getCreatedBy());
-    billHdr.setCreationDate(new Date()); // or use the original creation date if needed
-    billHdr.setFilestatus(objhdMst.getFilestatus());
 
-    // Handle different statuses with specific email assignments
-    if (objhdMst.getFilestatus().equals("WIP")) {
-        billHdr.setUseremail(objhdMst.getUseremail());
-        billHdr.setHodemail(objhdMst.getHodemail());
-        billHdr.setHodtktNo(objhdMst.getHodtktNo());
-        billHdr.setHodName(objhdMst.getHodName());
-        billHdr.setUserName(objhdMst.getUserName());
-    } else if (objhdMst.getFilestatus().equals("REVIEW")) {
-        billHdr.setUseremail(objhdMst.getUseremail());
-        billHdr.setHodemail(objhdMst.getRevieweremail());
-        billHdr.setHodtktNo(objhdMst.getReviewertktNo());
-        billHdr.setHodName(objhdMst.getReviewerName());
-        billHdr.setUserName(objhdMst.getUserName());
-    } else if (objhdMst.getFilestatus().equals("SEND FOR APPROVAL")) {
-        billHdr.setUseremail(objhdMst.getUseremail());
-        billHdr.setHodemail(objhdMst.getAuthorityemail());
-        billHdr.setHodtktNo(objhdMst.getAuthoritytktNo());
-        billHdr.setHodName(objhdMst.getAuthoritytktNo()); // Possible typo, check if it's correct
-        billHdr.setUserName(objhdMst.getUserName());
-    }
-}
-
-private void sendEmailNotifications(DocUploadDto objhdMst, DocumentUpload billHdr, MultipartFile file) throws MessagingException, IOException {
-                if(billHdr.getFilestatus().equals("SEND FOR APPROVAL") && objhdMst.getReviewerName()!=null)
-            {
-                 sendEmailNotification2(
-                    objhdMst.getCreatedBy(),
-                    objhdMst.getRemark() + "-" + billHdr.getVersion(),
-                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getReviewerName(),
-                    file, objhdMst.getAuthorityemail(),
-                    objhdMst.getRevieweremail()
-            );        
-            }
-             else if(billHdr.getFilestatus().equals("SEND FOR APPROVAL") && objhdMst.getReviewerName()==null){
-                sendEmailNotification3(
-                    objhdMst.getCreatedBy(),
-                    objhdMst.getRemark() + "-" + billHdr.getVersion(),
-                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getHodName(),
-                    file, objhdMst.getAuthorityemail(),
-                    objhdMst.getHodemail());
-            }
-            else if(billHdr.getFilestatus().equals("REVIEW")){
-                sendEmailNotification3(
-                    objhdMst.getCreatedBy(),
-                    objhdMst.getRemark() + "-" + billHdr.getVersion(),
-                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getUpdatedBy(),
-                    file, objhdMst.getRevieweremail(),
-                    billHdr.getHodemail());
-            }
-            else{
-            
-            // Send email notification
-            sendEmailNotification1(
-                    objhdMst.getCreatedBy(),
-                    objhdMst.getComment() + "-" + billHdr.getVersion(),
-                    objhdMst.getRemark() + "\n\nThanks & Regards,\n" + objhdMst.getHodName(),
-                    file, objhdMst.getUseremail(),
-                    objhdMst.getHodemail()
-            );
-            }
-}
-
-private void saveDocumentHistory(DocUploadDto objhdMst, DocumentUpload billHdr, MultipartFile file) throws IOException {
-    DocumentHistory docHistory = new DocumentHistory();
-    docHistory.setCreationDate(new Date());
-    docHistory.setCreatedBy(objhdMst.getCreatedBy());
-    docHistory.setFilestatus(objhdMst.getFilestatus());
-                if(objhdMst.getFilestatus().equals("WIP")){
-            docHistory.setUseremail(objhdMst.getUseremail());
-            docHistory.setHodemail(objhdMst.getHodemail());
-            docHistory.setHodtktNo(objhdMst.getHodtktNo());
-            docHistory.setHodName(objhdMst.getHodName());
-            docHistory.setUserName(objhdMst.getUserName());
-            }
-            if(objhdMst.getFilestatus().equals("REVIEW")){
-            docHistory.setUseremail(objhdMst.getUseremail());
-            docHistory.setHodemail(objhdMst.getRevieweremail());
-            docHistory.setHodtktNo(objhdMst.getReviewertktNo());
-            docHistory.setHodName(objhdMst.getReviewerName());
-            docHistory.setUserName(objhdMst.getUserName());
-            }
-             if(objhdMst.getFilestatus().equals("SEND FOR APPROVAL")){
-            docHistory.setUseremail(objhdMst.getUseremail());
-            docHistory.setHodemail(objhdMst.getAuthorityemail());
-            docHistory.setHodtktNo(objhdMst.getAuthoritytktNo());
-            docHistory.setHodName(objhdMst.getAuthorityName());
-            docHistory.setUserName(objhdMst.getUserName());
-            }
-
-    docHistory.setDocId(billHdr.getDocId());
-    docHistory.setVersion(billHdr.getVersion());
-    docHistory.setComment(billHdr.getComment());
-    docHistory.setDept(billHdr.getDept());
-    docHistory.setLocation(billHdr.getLocation());
-    docHistory.setOuId(billHdr.getOuId());
-    docHistory.setRemark(billHdr.getRemark());
-    docHistory.setFilestatus(billHdr.getFilestatus());
-    docHistory.setUpdatedBy(objhdMst.getHodtktNo());
-    docHistory.setFileName(objhdMst.getFileName());
-    docHistory.setFilePath(objhdMst.getFilePath());
-    docHistory.setUpdationDate(new Date());
-
-    // Save to database
-    docHistoryDao.save(docHistory);
-
-    if (file != null && !file.isEmpty()) {
-        String historyFileName = file.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_" + docHistory.getHistoryId() + file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
-        File historyFile = new File(filesPath + historyFileName);
-        docHistory.setFileName(historyFileName);
-        docHistory.setFilePath(historyFile.getAbsolutePath());
-
-        // Save file
-        file.transferTo(historyFile);
-    }
-}
 }
